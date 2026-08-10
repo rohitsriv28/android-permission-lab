@@ -11,6 +11,9 @@ router.post('/photo', optionalAuth, uploadSingle, MediaController.uploadPhoto);
 // Batch photos upload: POST /api/uploads/batch
 router.post('/batch', optionalAuth, uploadBatch, MediaController.uploadBatch);
 
+// Get aggregate user summary: GET /api/uploads/summary
+router.get('/summary', MediaController.getUserSummary);
+
 // List uploaded media: GET /api/uploads
 router.get('/', optionalAuth, MediaController.getMediaList);
 

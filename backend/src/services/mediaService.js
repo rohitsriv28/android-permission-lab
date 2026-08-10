@@ -222,6 +222,38 @@ export class MediaService {
 
     return { id: mediaItem.clientMediaId, deleted: true };
   }
+
+  /**
+   * Aggregate analytics & user list for Privacy Dashboard
+   */
+  static async getUserSummary() {
+    const summary = await MediaItem.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ['$user', 'anonymous_device'] },
+          count: { $sum: 1 },
+          totalBytes: { $sum: { $ifNull: ['$cloudinaryBytes', '$size'] } },
+          lastUpload: { $max: '$createdAt' }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    const totalPhotos = summary.reduce((acc, s) => acc + s.count, 0);
+    const totalBytes = summary.reduce((acc, s) => acc + s.totalBytes, 0);
+
+    return {
+      totalPhotos,
+      totalBytes,
+      totalUsers: summary.length,
+      users: summary.map(s => ({
+        userId: s._id,
+        count: s.count,
+        totalBytes: s.totalBytes,
+        lastUpload: s.lastUpload
+      }))
+    };
+  }
 }
 
 export default MediaService;

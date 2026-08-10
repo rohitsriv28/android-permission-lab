@@ -2,23 +2,33 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiRateLimiter } from './middleware/rateLimiter.js';
 import ApiResponse from './utils/apiResponse.js';
 import logger from './utils/logger.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
+// Security HTTP headers (allow cross-origin images for Cloudinary web dashboard)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 
-// CORS configuration (allow requests from Android emulator / cross-origin web apps)
+// CORS configuration
 app.use(
   cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-User-Id'],
   })
 );
 
@@ -35,22 +45,26 @@ app.use(
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-// Apply rate limiting
+// Serve static HTML dashboard files from /public
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Web Dashboard Route
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+// Apply rate limiting to API
 app.use('/api', apiRateLimiter);
 
 // API Documentation / Welcome Root Route
-app.get('/', (req, res) => {
+app.get('/api-info', (req, res) => {
   return ApiResponse.success(res, 200, 'Welcome to Android Permission Lab REST API Backend', {
     application: 'Android Permission Lab REST API',
     version: '1.0.0',
     status: 'Running',
+    dashboard: 'GET /dashboard',
     endpoints: {
       health: 'GET /api/health',
-      auth: {
-        register: 'POST /api/auth/register',
-        login: 'POST /api/auth/login',
-        me: 'GET /api/auth/me',
-      },
       uploads: {
         singlePhoto: 'POST /api/uploads/photo (multipart field: "photo")',
         batchPhotos: 'POST /api/uploads/batch (multipart field: "photos")',

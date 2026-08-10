@@ -13,7 +13,10 @@ export class MediaController {
         throw new ApiError(400, 'No image file uploaded in field "photo", "image", or "file"');
       }
 
-      const userId = req.user ? req.user._id : null;
+      const userId = req.user
+        ? req.user._id
+        : (req.headers['x-user-id'] || req.query.userId || req.body.userId || null);
+
       const metadata = {
         clientMediaId: req.body.clientMediaId || req.body.id,
         fileName: req.body.fileName,
@@ -48,7 +51,10 @@ export class MediaController {
         throw new ApiError(400, 'No image files uploaded in "photos", "images", or "files" field');
       }
 
-      const userId = req.user ? req.user._id : null;
+      const userId = req.user
+        ? req.user._id
+        : (req.headers['x-user-id'] || req.query.userId || req.body.userId || null);
+
       const metadataList = req.body.metadata || req.body.items || [];
 
       const batchResult = await MediaService.uploadBatchPhotos(files, metadataList, userId);
@@ -67,12 +73,15 @@ export class MediaController {
   }
 
   /**
-   * List Uploaded Media Items
+   * List Uploaded Media Items for User
    * GET /api/uploads
    */
   static async getMediaList(req, res, next) {
     try {
-      const userId = req.user ? req.user._id : null;
+      const userId = req.user
+        ? req.user._id
+        : (req.headers['x-user-id'] || req.query.userId || null);
+
       const options = {
         page: req.query.page,
         limit: req.query.limit,
@@ -91,7 +100,9 @@ export class MediaController {
    */
   static async getMediaDetail(req, res, next) {
     try {
-      const userId = req.user ? req.user._id : null;
+      const userId = req.user
+        ? req.user._id
+        : (req.headers['x-user-id'] || req.query.userId || null);
       const { id } = req.params;
 
       const mediaItem = await MediaService.getMediaById(id, userId);
@@ -107,11 +118,26 @@ export class MediaController {
    */
   static async deleteMedia(req, res, next) {
     try {
-      const userId = req.user ? req.user._id : null;
+      const userId = req.user
+        ? req.user._id
+        : (req.headers['x-user-id'] || req.query.userId || null);
       const { id } = req.params;
 
       const result = await MediaService.deleteMedia(id, userId);
       return ApiResponse.success(res, 200, 'Media item deleted successfully from server and Cloudinary', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get Aggregate User & Storage Summary Analytics
+   * GET /api/uploads/summary
+   */
+  static async getUserSummary(req, res, next) {
+    try {
+      const summary = await MediaService.getUserSummary();
+      return ApiResponse.success(res, 200, 'User media summary retrieved successfully', summary);
     } catch (error) {
       next(error);
     }
