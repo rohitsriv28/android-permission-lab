@@ -1,6 +1,7 @@
 package com.permissionlab.app.ui.screens.gallery
 
 import android.Manifest
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -154,7 +155,7 @@ fun MediaItemCard(
     ) {
         Box {
             AsyncImage(
-                model = item.uri,
+                model = Uri.parse(item.uri),
                 contentDescription = item.fileName,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
