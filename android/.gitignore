@@ -1,0 +1,25 @@
+# Build outputs
+*.apk
+*.aar
+*.aab
+*.dex
+build/
+app/build/
+
+# Gradle caches & local settings
+.gradle/
+local.properties
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE files
+.idea/
+*.iml
+.idea/caches
+.idea/libraries
+
+# Keystores & Credentials
+*.keystore
+*.jks

@@ -1,0 +1,31 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node dependencies & secrets
+node_modules/
+backend/node_modules/
+backend/.env
+.env
+.env.local
+*.log
+
+# Android build outputs & local config
+.gradle/
+android/.gradle/
+build/
+android/build/
+android/app/build/
+.idea/
+android/.idea/
+*.iml
+local.properties
+android/local.properties
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks
