@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloudinary & MongoDB Analytics & Privacy Dashboard</title>
+  <title>Cloudinary & MongoDB Storage Vault</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0D0D12;
-      --surface: #161622;
-      --surface-variant: #202032;
-      --border: rgba(255, 255, 255, 0.08);
-      --primary: #38BDF8;
-      --secondary: #A855F7;
-      --accent: #F59E0B;
-      --text: #ECECF4;
-      --text-dim: #9494AC;
-      --radius: 16px;
+      --bg: #07080C;
+      --surface: #12141F;
+      --surface-hover: #191C2B;
+      --surface-variant: #1E2235;
+      --border: #23273B;
+      --border-bright: #363C59;
+      --cyan: #00F0FF;
+      --purple: #8B5CF6;
+      --green: #00FF66;
+      --red: #FF0055;
+      --amber: #FFB800;
+      --text: #FFFFFF;
+      --text-dim: #9E9EB2;
     }
 
     * {
@@ -37,9 +40,9 @@
 
     /* Header */
     header {
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(13, 13, 18, 0) 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 24px 32px;
+      background-color: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 20px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -54,28 +57,39 @@
     }
 
     .brand-logo {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
+      background-color: var(--cyan);
+      border: 2px solid var(--cyan);
       border-radius: 12px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 20px;
-      color: white;
-      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+      color: #000;
+    }
+
+    .brand-logo svg {
+      width: 26px;
+      height: 26px;
+      stroke: #000;
+      stroke-width: 2.2;
+      fill: none;
     }
 
     .brand-title h1 {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
       letter-spacing: -0.5px;
+      color: var(--text);
+      text-transform: uppercase;
     }
 
     .brand-title p {
-      font-size: 13px;
-      color: var(--text-dim);
+      font-size: 12px;
+      color: var(--cyan);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .controls {
@@ -88,24 +102,36 @@
     .input-group {
       display: flex;
       align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: 2px solid var(--border);
       border-radius: 10px;
       padding: 6px 14px;
+      gap: 8px;
+    }
+
+    .input-group svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-dim);
+      stroke-width: 2;
+      fill: none;
     }
 
     .input-group label {
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-dim);
-      margin-right: 8px;
+      text-transform: uppercase;
     }
 
-    select, input {
+    select {
       background: transparent;
       border: none;
       color: var(--text);
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: 600;
       outline: none;
+      cursor: pointer;
     }
 
     select option {
@@ -113,27 +139,63 @@
       color: var(--text);
     }
 
+    /* Solid Action Button */
     .btn {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: white;
-      border: none;
+      background-color: var(--cyan);
+      color: #000;
+      border: 2px solid var(--cyan);
       padding: 10px 20px;
       border-radius: 10px;
-      font-weight: 600;
+      font-weight: 800;
       font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.15s, transform 0.1s;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: #000;
+      stroke-width: 2.5;
+      fill: none;
     }
 
     .btn:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
+      background-color: #33F3FF;
+      transform: translateY(-2px);
     }
 
     .btn-secondary {
-      background: var(--surface-variant);
+      background-color: var(--surface-variant);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 2px solid var(--border-bright);
+    }
+
+    .btn-secondary svg {
+      stroke: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border);
+    }
+
+    .btn-danger {
+      background-color: var(--red);
+      color: #FFF;
+      border: 2px solid var(--red);
+    }
+
+    .btn-danger svg {
+      stroke: #FFF;
+    }
+
+    .btn-danger:hover {
+      background-color: #FF266F;
     }
 
     /* Stats Bar */
@@ -142,34 +204,63 @@
       margin: 28px auto 0;
       padding: 0 32px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
     }
 
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .stat-card span {
-      font-size: 12px;
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-header span {
+      font-size: 11px;
+      font-weight: 800;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: var(--surface-variant);
+      border: 1px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--cyan);
+      stroke-width: 2.2;
+      fill: none;
     }
 
     .stat-card strong {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--primary);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: -0.5px;
     }
 
-    /* Main Section */
+    /* Main Container */
     main {
       max-width: 1400px;
       margin: 32px auto 0;
@@ -178,60 +269,82 @@
 
     .section-title {
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .privacy-notice {
-      background: rgba(56, 189, 248, 0.06);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      border-radius: var(--radius);
+      background-color: var(--surface);
+      border: 2px solid var(--cyan);
+      border-radius: 14px;
       padding: 20px 24px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 16px;
     }
 
-    .privacy-notice p {
-      font-size: 14px;
+    .privacy-notice-icon {
+      width: 42px;
+      height: 42px;
+      background-color: var(--cyan);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .privacy-notice-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #000;
+      stroke-width: 2.5;
+      fill: none;
+    }
+
+    .privacy-notice h4 {
+      font-size: 15px;
+      font-weight: 800;
       color: var(--text);
+      text-transform: uppercase;
     }
 
-    .privacy-notice small {
-      display: block;
+    .privacy-notice p {
+      font-size: 13px;
       color: var(--text-dim);
-      font-size: 12px;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
-    /* User Folders Grid */
+    /* Folders Grid */
     .folders-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
     }
 
     .folder-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
       padding: 24px;
       cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      transition: transform 0.15s, border-color 0.15s;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
 
     .folder-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(168, 85, 247, 0.4);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      border-color: var(--cyan);
     }
 
     .folder-header {
@@ -241,37 +354,65 @@
     }
 
     .folder-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(56, 189, 248, 0.2));
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background-color: var(--purple);
+      border: 2px solid var(--purple);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      border: 1px solid rgba(168, 85, 247, 0.3);
+      flex-shrink: 0;
+    }
+
+    .folder-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: #FFF;
+      stroke-width: 2.2;
+      fill: none;
     }
 
     .folder-title h3 {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 800;
+      color: var(--text);
+      word-break: break-all;
     }
 
     .folder-title p {
-      font-size: 12px;
-      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-top: 2px;
     }
 
     .folder-stats {
       display: flex;
       justify-content: space-between;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      border-top: 2px solid var(--border);
       font-size: 12px;
+      font-weight: 700;
       color: var(--text-dim);
     }
 
-    /* Media Gallery Grid */
+    .folder-stats span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .folder-stats svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--cyan);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Media Grid */
     .gallery-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -279,24 +420,23 @@
     }
 
     .photo-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
       overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.15s, border-color 0.15s;
       cursor: pointer;
     }
 
     .photo-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-      border-color: rgba(56, 189, 248, 0.3);
+      border-color: var(--cyan);
     }
 
     .img-wrapper {
       width: 100%;
       height: 220px;
-      background: var(--surface-variant);
+      background-color: var(--surface-variant);
       position: relative;
       overflow: hidden;
     }
@@ -305,7 +445,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s;
+      transition: transform 0.2s;
     }
 
     .photo-card:hover .img-wrapper img {
@@ -316,23 +456,23 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      color: #38BDF8;
-      font-size: 11px;
-      font-weight: 600;
+      background-color: var(--cyan);
+      color: #000;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
       padding: 4px 8px;
       border-radius: 6px;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      letter-spacing: 0.5px;
     }
 
     .photo-info {
-      padding: 14px;
+      padding: 14px 16px;
     }
 
     .photo-name {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -343,6 +483,7 @@
       display: flex;
       justify-content: space-between;
       font-size: 11px;
+      font-weight: 600;
       color: var(--text-dim);
     }
 
@@ -351,8 +492,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(12px);
+      background-color: rgba(7, 8, 12, 0.92);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -360,15 +500,15 @@
     }
 
     .modal-content {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background-color: var(--surface);
+      border: 2px solid var(--border-bright);
       border-radius: 20px;
-      max-width: 900px;
+      max-width: 920px;
       width: 100%;
       max-height: 90vh;
       overflow: hidden;
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: 1fr 360px;
     }
 
     @media (max-width: 768px) {
@@ -376,7 +516,7 @@
     }
 
     .modal-img-container {
-      background: black;
+      background-color: #000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -389,29 +529,39 @@
     }
 
     .modal-details {
-      padding: 24px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
+      border-left: 2px solid var(--border);
+    }
+
+    .modal-details h3 {
+      font-size: 18px;
+      font-weight: 800;
+      word-break: break-all;
     }
 
     .detail-row {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
     }
 
     .detail-row label {
-      font-size: 11px;
+      font-size: 10px;
+      font-weight: 800;
       color: var(--text-dim);
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .detail-row p {
       font-size: 13px;
+      font-weight: 600;
       color: var(--text);
       word-break: break-all;
     }
@@ -422,43 +572,64 @@
   <!-- Header -->
   <header>
     <div class="brand">
-      <div class="brand-logo">📊</div>
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+      </div>
       <div class="brand-title">
-        <h1>Cloudinary & MongoDB Analytics</h1>
-        <p>Multi-User Privacy Vault Dashboard</p>
+        <h1>Cloudinary & MongoDB Vault</h1>
+        <p>User Isolated Storage System</p>
       </div>
     </div>
 
     <div class="controls">
       <div class="input-group">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
         <label for="serverSelect">Server:</label>
         <select id="serverSelect" onchange="fetchAnalytics()">
-          <option value="https://android-permission-lab.onrender.com">Live Production (Render)</option>
-          <option value="">Local Node Server (http://localhost:5000)</option>
+          <option value="https://android-permission-lab.onrender.com">Production Server (Render)</option>
+          <option value="">Local Server (localhost:5000)</option>
         </select>
       </div>
 
-      <button class="btn" onclick="fetchAnalytics()">🔄 Refresh Analytics</button>
+      <button class="btn" onclick="fetchAnalytics()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        Refresh
+      </button>
     </div>
   </header>
 
   <!-- Summary Stats Bar -->
   <div class="stats-bar">
     <div class="stat-card">
-      <span>Total Cloud Photos</span>
+      <div class="stat-header">
+        <span>Total Cloud Media</span>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
+      </div>
       <strong id="statCount">0</strong>
     </div>
+
     <div class="stat-card">
-      <span>Total Cloudinary Storage</span>
+      <div class="stat-header">
+        <span>Cloud Storage Used</span>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M21 19c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14"></path><path d="M21 5v14"></path></svg></div>
+      </div>
       <strong id="statSize">0 MB</strong>
     </div>
+
     <div class="stat-card">
-      <span>Active User Devices</span>
+      <div class="stat-header">
+        <span>User Device Vaults</span>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></div>
+      </div>
       <strong id="statUsers">0</strong>
     </div>
+
     <div class="stat-card">
-      <span>Privacy Vault Mode</span>
-      <strong style="color: #10B981;" id="vaultModeText">ANALYTICS ONLY</strong>
+      <div class="stat-header">
+        <span>Privacy Vault Mode</span>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+      </div>
+      <strong style="color: var(--green);" id="vaultModeText">ANALYTICS ONLY</strong>
     </div>
   </div>
 
@@ -467,14 +638,17 @@
     <!-- View 1: Analytics & User Folders (Default) -->
     <div id="analyticsView">
       <div class="section-title">
-        <h2>Personal User Device Folders</h2>
-        <span style="font-size: 13px; color: var(--text-dim);">Select a folder to unlock and view media</span>
+        <h2>User Device Personal Vaults</h2>
+        <span style="font-size: 12px; font-weight: 700; color: var(--cyan); text-transform: uppercase;">Select a device folder to inspect media</span>
       </div>
 
       <div class="privacy-notice">
+        <div class="privacy-notice-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
         <div>
-          <p>🔒 <strong>Strict Multi-User Privacy Enforced</strong></p>
-          <small>Photos remain private to each individual user folder. Media thumbnails are hidden until a specific user folder is unlocked.</small>
+          <h4>Strict User Media Isolation Enforced</h4>
+          <p>Media files are isolated per user device ID. Thumbnails remain hidden until a specific user folder is unlocked.</p>
         </div>
       </div>
 
@@ -487,10 +661,13 @@
     <div id="userGalleryView" style="display: none;">
       <div class="section-title">
         <div>
-          <h2 id="activeUserTitle">📁 User Personal Vault</h2>
-          <span style="font-size: 13px; color: var(--text-dim);" id="activeUserSubtitle">Viewing photos for this device</span>
+          <h2 id="activeUserTitle">User Personal Vault</h2>
+          <span style="font-size: 12px; font-weight: 700; color: var(--cyan); text-transform: uppercase;" id="activeUserSubtitle">Viewing photos for this device</span>
         </div>
-        <button class="btn btn-secondary" onclick="lockVault()">🔒 Lock & Back to Analytics</button>
+        <button class="btn btn-secondary" onclick="lockVault()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Lock & Return to Analytics
+        </button>
       </div>
 
       <div id="userGalleryGrid" class="gallery-grid">
@@ -509,8 +686,8 @@
         <h3 id="modalName">Photo Name</h3>
         
         <div class="detail-row">
-          <label>Cloudinary URL</label>
-          <p><a id="modalCdnUrl" href="#" target="_blank" style="color: var(--primary);">Open CDN Link</a></p>
+          <label>Cloudinary CDN URL</label>
+          <p><a id="modalCdnUrl" href="#" target="_blank" style="color: var(--cyan); text-decoration: none;">Open Link →</a></p>
         </div>
 
         <div class="detail-row">
@@ -529,11 +706,14 @@
         </div>
 
         <div class="detail-row">
-          <label>MongoDB Object ID</label>
+          <label>MongoDB Document ID</label>
           <p id="modalMongoId">N/A</p>
         </div>
 
-        <button class="btn" style="margin-top: 10px; background: #EF4444;" onclick="deleteCurrentPhoto()">Delete from Cloud</button>
+        <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteCurrentPhoto()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Delete from Server
+        </button>
         <button class="btn btn-secondary" onclick="closeModalDirect()">Close</button>
       </div>
     </div>
@@ -565,11 +745,10 @@
           
           renderUserFolders(summary.users || []);
         } else {
-          // Fallback to fetch all media if summary endpoint not available
           fetchFallbackMedia();
         }
       } catch (err) {
-        console.error('Failed to fetch analytics from ' + url + ':', err);
+        console.error('Failed to fetch analytics:', err);
         fetchFallbackMedia();
       }
     }
@@ -587,7 +766,6 @@
           const totalBytes = photos.reduce((sum, p) => sum + (p.cloudinaryBytes || p.size || 0), 0);
           document.getElementById('statSize').innerText = formatBytes(totalBytes);
 
-          // Group by user
           const userMap = {};
           photos.forEach(p => {
             const u = p.user || 'default_device_user';
@@ -611,8 +789,8 @@
       if (!users || users.length === 0) {
         grid.innerHTML = `
           <div class="stat-card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-            <p style="font-size: 16px; font-weight: 600;">No active user device folders found.</p>
-            <p style="font-size: 13px; color: var(--text-dim); margin-top: 6px;">Open the Android app on your device to start syncing photos!</p>
+            <p style="font-size: 16px; font-weight: 800; color: var(--text);">No user device vaults found.</p>
+            <p style="font-size: 13px; color: var(--text-dim); margin-top: 6px;">Open the app on your Android phone to start syncing photos!</p>
           </div>
         `;
         return;
@@ -621,17 +799,28 @@
       grid.innerHTML = users.map(user => `
         <div class="folder-card" onclick="openUserFolder('${escapeHtml(user.userId)}')">
           <div class="folder-header">
-            <div class="folder-icon">📁</div>
+            <div class="folder-icon">
+              <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            </div>
             <div class="folder-title">
               <h3>${escapeHtml(user.userId)}</h3>
-              <p>Device User Vault</p>
+              <p>User Media Vault</p>
             </div>
           </div>
           <div class="folder-stats">
-            <span>📸 ${user.count} Photos</span>
-            <span>💾 ${formatBytes(user.totalBytes)}</span>
+            <span>
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              ${user.count} Photos
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M21 19c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14"></path><path d="M21 5v14"></path></svg>
+              ${formatBytes(user.totalBytes)}
+            </span>
           </div>
-          <button class="btn" style="width: 100%;">Unlock Personal Vault →</button>
+          <button class="btn" style="width: 100%;">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Unlock User Vault
+          </button>
         </div>
       `).join('');
     }
@@ -640,10 +829,10 @@
       activeUserId = userId;
       document.getElementById('analyticsView').style.display = 'none';
       document.getElementById('userGalleryView').style.display = 'block';
-      document.getElementById('activeUserTitle').innerText = `📁 Personal Vault: ${userId}`;
+      document.getElementById('activeUserTitle').innerText = `Personal Vault: ${userId}`;
       document.getElementById('activeUserSubtitle').innerText = `Displaying private media uploaded from ${userId}`;
       document.getElementById('vaultModeText').innerText = `UNLOCKED (${userId})`;
-      document.getElementById('vaultModeText').style.color = '#38BDF8';
+      document.getElementById('vaultModeText').style.color = 'var(--cyan)';
 
       const baseUrl = getBaseUrl();
       const url = `${baseUrl}/api/uploads?userId=${encodeURIComponent(userId)}&limit=200`;
@@ -667,7 +856,7 @@
       if (!photos || photos.length === 0) {
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 60px;">
-            <p style="font-size: 16px; font-weight: 600;">No photos uploaded for this user yet.</p>
+            <p style="font-size: 16px; font-weight: 800; color: var(--text);">No photos uploaded for this user yet.</p>
           </div>
         `;
         return;
@@ -695,7 +884,7 @@
       document.getElementById('userGalleryView').style.display = 'none';
       document.getElementById('analyticsView').style.display = 'block';
       document.getElementById('vaultModeText').innerText = 'ANALYTICS ONLY';
-      document.getElementById('vaultModeText').style.color = '#10B981';
+      document.getElementById('vaultModeText').style.color = 'var(--green)';
       fetchAnalytics();
     }
 
