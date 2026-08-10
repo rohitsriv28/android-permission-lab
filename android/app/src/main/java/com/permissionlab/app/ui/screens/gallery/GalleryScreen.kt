@@ -40,15 +40,15 @@ fun GalleryScreen(
     val permissionStatus by viewModel.permissionStatus.collectAsState()
     val recentlyUploadedIds by viewModel.recentlyUploadedIds.collectAsState()
     
-    // Request strictly Full Gallery Access permission (never request partial READ_MEDIA_VISUAL_USER_SELECTED)
-    val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+    // Request strictly single Full Gallery Access permission (never request READ_MEDIA_VISUAL_USER_SELECTED)
+    val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
     } else {
-        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        contract = ActivityResultContracts.RequestPermission(),
         onResult = { _ ->
             viewModel.refreshPermissionStatus()
         }
@@ -70,7 +70,7 @@ fun GalleryScreen(
                 PermissionStatus.NOT_GRANTED -> {
                     PermissionRequestContent(
                         onGrantAccess = {
-                            permissionLauncher.launch(permissionsToRequest)
+                            permissionLauncher.launch(permissionToRequest)
                         }
                     )
                 }
