@@ -8,9 +8,8 @@ const mediaItemSchema = new mongoose.Schema(
       index: true,
     },
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
+      type: mongoose.Schema.Types.Mixed,
+      default: 'default_device_user',
       index: true,
     },
     fileName: {

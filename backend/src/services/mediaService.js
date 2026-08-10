@@ -9,7 +9,7 @@ export class MediaService {
    */
   static async uploadSinglePhoto(file, metadata = {}, userId = null) {
     const clientMediaId = metadata.clientMediaId || metadata.id || `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const userQuery = userId ? userId : null;
+    const userQuery = userId || 'default_device_user';
 
     const fileName = metadata.fileName || (file && file.originalname) || `photo_${Date.now()}.jpg`;
     const mimeType = metadata.mimeType || (file && file.mimetype) || 'image/jpeg';
