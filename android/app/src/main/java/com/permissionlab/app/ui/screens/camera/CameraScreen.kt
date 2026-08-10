@@ -12,30 +12,50 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import com.permissionlab.app.model.PermissionStatus
+import com.permissionlab.app.ui.components.GradientButton
+import com.permissionlab.app.ui.theme.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
     onNavigateBack: () -> Unit,
@@ -44,82 +64,53 @@ fun CameraScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val permissionStatus by viewModel.cameraPermissionStatus.collectAsState()
-    
+
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         viewModel.onPermissionResult(isGranted)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Camera") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (permissionStatus == PermissionStatus.GRANTED) {
+            // ── Immersive camera viewfinder ───────────────────
+            ImmersiveCameraContent(
+                context = context,
+                lifecycleOwner = lifecycleOwner,
+                cameraExecutor = cameraExecutor,
+                capturedImageUri = capturedImageUri,
+                onPhotoCaptured = { uri ->
+                    capturedImageUri = uri
+                    val file = try { File(uri.path ?: "") } catch (e: Exception) { null }
+                    val fileSize = file?.length() ?: 0L
+                    val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    if (file != null && file.exists()) {
+                        android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
                     }
-                }
+                    viewModel.onPhotoCaptured(
+                        uri = uri.toString(),
+                        fileName = file?.name ?: "photo_${System.currentTimeMillis()}.jpg",
+                        size = fileSize,
+                        width = options.outWidth.let { if (it > 0) it else 1920 },
+                        height = options.outHeight.let { if (it > 0) it else 1080 }
+                    )
+                },
+                onNavigateBack = onNavigateBack
+            )
+        } else {
+            // ── Permission request ────────────────────────────
+            CameraPermissionRequest(
+                onGrantClick = {
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                },
+                onNavigateBack = onNavigateBack
             )
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            if (permissionStatus == PermissionStatus.GRANTED) {
-                CameraContent(
-                    context = context,
-                    lifecycleOwner = lifecycleOwner,
-                    cameraExecutor = cameraExecutor,
-                    onPhotoCaptured = { uri ->
-                        capturedImageUri = uri
-                        val file = try { java.io.File(uri.path ?: "") } catch (e: Exception) { null }
-                        val fileSize = file?.length() ?: 0L
-                        val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                        if (file != null && file.exists()) {
-                            android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
-                        }
-                        viewModel.onPhotoCaptured(
-                            uri = uri.toString(),
-                            fileName = file?.name ?: "photo_${System.currentTimeMillis()}.jpg",
-                            size = fileSize,
-                            width = options.outWidth.let { if (it > 0) it else 1920 },
-                            height = options.outHeight.let { if (it > 0) it else 1080 }
-                        )
-                    }
-                )
-                
-                capturedImageUri?.let { uri ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Last Captured Photo:",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Image(
-                        painter = rememberAsyncImagePainter(uri),
-                        contentDescription = "Captured photo",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .padding(16.dp)
-                    )
-                }
-            } else {
-                PermissionRequestContent(
-                    onGrantClick = {
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                )
-            }
-        }
     }
-    
+
     DisposableEffect(Unit) {
         onDispose {
             cameraExecutor.shutdown()
@@ -128,11 +119,13 @@ fun CameraScreen(
 }
 
 @Composable
-fun CameraContent(
+private fun ImmersiveCameraContent(
     context: Context,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     cameraExecutor: ExecutorService,
-    onPhotoCaptured: (Uri) -> Unit
+    capturedImageUri: Uri?,
+    onPhotoCaptured: (Uri) -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
@@ -145,14 +138,10 @@ fun CameraContent(
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
-
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageCapture
+                    lifecycleOwner, cameraSelector, preview, imageCapture
                 )
             } catch (e: Exception) {
                 Log.e("CameraScreen", "Use case binding failed", e)
@@ -160,43 +149,204 @@ fun CameraContent(
         }, ContextCompat.getMainExecutor(context))
     }
 
-    Box(modifier = Modifier.fillMaxWidth().height(400.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Full-screen camera preview
         AndroidView(
             factory = { previewView },
             modifier = Modifier.fillMaxSize()
         )
-        
-        Button(
-            onClick = {
-                takePhoto(context, imageCapture, cameraExecutor, onPhotoCaptured)
-            },
+
+        // Floating back button (top-left)
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
+                .statusBarsPadding()
+                .padding(16.dp)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.45f))
+                .clickable(onClick = onNavigateBack)
+                .align(Alignment.TopStart),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Camera, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Take Photo")
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        // Bottom controls area
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                    )
+                )
+                .navigationBarsPadding()
+                .padding(bottom = 32.dp, top = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Last captured thumbnail (bottom-left)
+                Box(modifier = Modifier.size(52.dp)) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = capturedImageUri != null,
+                        enter = fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -it }
+                    ) {
+                        capturedImageUri?.let { uri ->
+                            AsyncImage(
+                                model = uri,
+                                contentDescription = "Last captured",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                }
+
+                // Shutter button (center)
+                ShutterButton(
+                    onClick = {
+                        takePhoto(context, imageCapture, cameraExecutor, onPhotoCaptured)
+                    }
+                )
+
+                // Spacer for symmetry
+                Spacer(modifier = Modifier.size(52.dp))
+            }
         }
     }
 }
 
 @Composable
-fun PermissionRequestContent(onGrantClick: () -> Unit) {
-    Column(
+private fun ShutterButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.88f else 1f,
+        animationSpec = tween(100),
+        label = "shutterScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(76.dp)
+            .scale(scale)
+            .clip(CircleShape)
+            .border(4.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(62.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+        )
+    }
+}
+
+@Composable
+private fun CameraPermissionRequest(
+    onGrantClick: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Text(
-            text = "Camera access is needed to take photos in this lab.",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        Button(onClick = onGrantClick) {
-            Text("Grant Camera Access")
+        // Floating back button
+        Box(
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable(onClick = onNavigateBack)
+                .align(Alignment.TopStart),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Large camera icon with gradient background
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        Brush.linearGradient(listOf(GradientCyanStart, GradientCyanEnd))
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PhotoCamera,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = "Camera Access",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Grant camera permission to capture photos directly within the lab.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            GradientButton(
+                text = "Grant Camera Access",
+                onClick = onGrantClick,
+                gradientColors = listOf(GradientCyanStart, GradientCyanEnd),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
+                    )
+                }
+            )
         }
     }
 }

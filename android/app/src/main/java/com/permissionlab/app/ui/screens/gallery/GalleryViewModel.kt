@@ -15,6 +15,8 @@ import com.permissionlab.app.model.PermissionStatus
 import com.permissionlab.app.model.UploadStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -83,27 +85,29 @@ class GalleryViewModel @Inject constructor(
     }
 
     private fun autoUploadAll() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val currentItems = galleryImages.value
-            currentItems.forEach { item ->
-                launch {
-                    repository.updateMediaItem(item.copy(uploadStatus = UploadStatus.UPLOADING))
-                    val result = com.permissionlab.app.data.remote.NetworkService.uploadPhoto(getApplication(), item)
-                    result.fold(
-                        onSuccess = { updatedItem ->
-                            repository.updateMediaItem(updatedItem)
-                            // Add item ID to recentlyUploadedIds for 3 seconds temporary checkmark display
-                            _recentlyUploadedIds.update { it + item.id }
-                            viewModelScope.launch {
-                                delay(3000)
-                                _recentlyUploadedIds.update { it - item.id }
+            // Process continuous background cloud sync in chunks of 3
+            currentItems.chunked(3).forEach { chunk ->
+                chunk.map { item ->
+                    async {
+                        repository.updateMediaItem(item.copy(uploadStatus = UploadStatus.UPLOADING))
+                        val result = com.permissionlab.app.data.remote.NetworkService.uploadPhoto(getApplication(), item)
+                        result.fold(
+                            onSuccess = { updatedItem ->
+                                repository.updateMediaItem(updatedItem)
+                                _recentlyUploadedIds.update { it + item.id }
+                                viewModelScope.launch {
+                                    delay(3000)
+                                    _recentlyUploadedIds.update { it - item.id }
+                                }
+                            },
+                            onFailure = {
+                                repository.updateMediaItem(item.copy(uploadStatus = UploadStatus.FAILED))
                             }
-                        },
-                        onFailure = {
-                            repository.updateMediaItem(item.copy(uploadStatus = UploadStatus.FAILED))
-                        }
-                    )
-                }
+                        )
+                    }
+                }.awaitAll()
             }
         }
     }

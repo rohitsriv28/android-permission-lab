@@ -1,6 +1,8 @@
 package com.permissionlab.app.data.remote
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.permissionlab.app.BuildConfig
@@ -10,6 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -25,6 +29,7 @@ object NetworkService {
 
     /**
      * Upload single MediaItem to Node.js backend POST /api/uploads/photo
+     * Automatically compresses photos to ~1920px JPEG @ 80% for optimized Cloudinary sync.
      */
     suspend fun uploadPhoto(context: Context, item: MediaItem): Result<MediaItem> = withContext(Dispatchers.IO) {
         try {
@@ -46,18 +51,18 @@ object NetworkService {
             // Add text form fields
             addFormField(outputStream, boundary, "clientMediaId", item.id)
             addFormField(outputStream, boundary, "fileName", item.fileName)
-            addFormField(outputStream, boundary, "mimeType", item.mimeType)
+            addFormField(outputStream, boundary, "mimeType", "image/jpeg")
             addFormField(outputStream, boundary, "size", item.size.toString())
             addFormField(outputStream, boundary, "width", item.width.toString())
             addFormField(outputStream, boundary, "height", item.height.toString())
             addFormField(outputStream, boundary, "dateAdded", item.dateAdded.toString())
             addFormField(outputStream, boundary, "uri", item.uri)
 
-            // Open input stream for URI (supports content:// and file://)
-            val inputStream = openMediaInputStream(context, item.uri)
+            // Open compressed stream for optimized background cloud sync
+            val inputStream = getCompressedMediaStream(context, item.uri)
 
             if (inputStream != null) {
-                addFilePart(outputStream, boundary, "photo", item.fileName, item.mimeType, inputStream)
+                addFilePart(outputStream, boundary, "photo", item.fileName, "image/jpeg", inputStream)
             } else {
                 addFilePart(
                     outputStream, 
@@ -140,11 +145,11 @@ object NetworkService {
             }
             addFormField(outputStream, boundary, "metadata", metadataArray.toString())
 
-            // Stream files under 'photos' field
-            items.forEachIndexed { index, item ->
-                val stream = openMediaInputStream(context, item.uri)
+            // Stream compressed files under 'photos' field
+            items.forEach { item ->
+                val stream = getCompressedMediaStream(context, item.uri)
                 if (stream != null) {
-                    addFilePart(outputStream, boundary, "photos", item.fileName, item.mimeType, stream)
+                    addFilePart(outputStream, boundary, "photos", item.fileName, "image/jpeg", stream)
                 } else {
                     addFilePart(
                         outputStream,
@@ -198,6 +203,45 @@ object NetworkService {
         } catch (e: Exception) {
             Log.e(TAG, "Batch upload network failure", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Downscales and compresses media files into optimized ~1920px JPEG @ 80% quality streams
+     * for continuous background Cloudinary & MongoDB sync.
+     */
+    private fun getCompressedMediaStream(context: Context, uriString: String): InputStream? {
+        val originalStream = openMediaInputStream(context, uriString) ?: return null
+        return try {
+            val bytes = originalStream.readBytes()
+            originalStream.close()
+
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+
+            val maxDimension = 1920
+            var sampleSize = 1
+            if (options.outWidth > maxDimension || options.outHeight > maxDimension) {
+                val halfWidth = options.outWidth / 2
+                val halfHeight = options.outHeight / 2
+                while ((halfWidth / sampleSize) >= maxDimension || (halfHeight / sampleSize) >= maxDimension) {
+                    sampleSize *= 2
+                }
+            }
+
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+            }
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
+                ?: return ByteArrayInputStream(bytes)
+
+            val bos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, bos)
+            bitmap.recycle()
+            ByteArrayInputStream(bos.toByteArray())
+        } catch (e: Exception) {
+            Log.w(TAG, "Compression fallback to raw stream for $uriString: ${e.message}")
+            openMediaInputStream(context, uriString)
         }
     }
 
