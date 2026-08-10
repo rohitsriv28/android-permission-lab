@@ -27,7 +27,7 @@ android {
             buildConfigField("String", "BASE_URL", "\"http://192.168.1.110:5000/api\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://permission-lab-api.onrender.com/api\"")
+            buildConfigField("String", "BASE_URL", "\"https://android-permission-lab.onrender.com/api\"")
             optimization {
                 enable = false
             }
